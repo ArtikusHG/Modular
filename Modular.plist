@@ -1,0 +1,9 @@
+{
+	Filter = {
+		Bundles = (
+			"com.apple.ControlCenterUI",
+			"com.apple.springboard",
+			"com.apple.ControlCenterUIKit",
+		);
+	};
+}
