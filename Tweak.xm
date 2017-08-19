@@ -1,38 +1,7 @@
-#include <spawn.h>
-#include <signal.h>
-UIVisualEffect *blurEffect;
-UIVisualEffectView *blurView;
-UIButton *wifi;
-UISlider *slider;
-// Needed interfaces
-@interface SBBrightnessController
-+ (id)sharedBrightnessController;
-- (void)setBrightnessLevel:(float)arg1;
-@end
-@interface _CDBatterySaver
-+ (id)batterySaver;
-- (long long)getPowerMode;
-- (BOOL)setPowerMode:(long long)arg1 error:(id*)arg2;
-@end
-@interface SBTelephonyManager
-+ (id)sharedTelephonyManager;
-- (BOOL)isInAirplaneMode;
-- (void)setIsInAirplaneMode:(BOOL)arg1;
-@end
-@interface UIButton()
-- (void)_setImageColor:(id)arg1 forState:(unsigned int)arg2;
-@end
-@interface CCUIControlCenterContainerView : UIView
-@end
-@interface FBSystemService : NSObject
-+(id)sharedInstance;
--(void)shutdownAndReboot:(BOOL)arg1;
-@end
-@interface SBWiFiManager
-+(id)sharedInstance;
--(void)setWiFiEnabled:(BOOL)enabled;
--(bool)wiFiEnabled;
-@end
+//All important items are now in a separate header file 
+#import "Modular.h"
+
+
 %hook CCUIControlCenterContainerView
 - (void)setRevealPercentage:(CGFloat)revealPercentage {
 // Remove the original view
@@ -47,10 +16,12 @@ blurView = [[UIVisualEffectView alloc]initWithEffect:blurEffect];
 blurView.frame = [UIScreen mainScreen].bounds;
 [blurView setAlpha:0.95];
 [self addSubview:blurView];
+
 // The dark thingy at the top
 UIView *darkView = [[UIView alloc]initWithFrame:CGRectMake(0,0,[UIScreen mainScreen].bounds.size.width,[UIScreen mainScreen].bounds.size.height / 3)];
 [darkView setBackgroundColor: [UIColor colorWithRed:0.00 green:0.00 blue:0.00 alpha:0.5]];
 [self addSubview:darkView];
+
 // Power off button
 UIButton *powerOff = [UIButton buttonWithType:UIButtonTypeRoundedRect];
 powerOff.frame = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 75,10,150,35);
@@ -59,6 +30,7 @@ powerOff.frame = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 75,10,
 [powerOff setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
 [powerOff.titleLabel setFont:[UIFont systemFontOfSize:25]];
 [darkView addSubview:powerOff];
+
 // Reboot button
 UIButton *reBoot = [UIButton buttonWithType:UIButtonTypeRoundedRect];
 reBoot.frame = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 75,75,150,35);
@@ -67,61 +39,77 @@ reBoot.frame = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 75,75,15
 [reBoot setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
 [reBoot.titleLabel setFont:[UIFont systemFontOfSize:25]];
 [darkView addSubview:reBoot];
+
+//Respring Button
 UIButton *reSpring = [UIButton buttonWithType:UIButtonTypeRoundedRect];
 reSpring.frame = CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 75,140,150,35);
 [reSpring setTitle:@"Respring" forState:UIControlStateNormal];
-[reSpring addTarget: self action:@selector(reSpring) forControlEvents:UIControlEventTouchUpInside];
+[reSpring addTarget: self action:@selector(respring) forControlEvents:UIControlEventTouchUpInside];
 [reSpring setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
 [reSpring.titleLabel setFont:[UIFont systemFontOfSize:25]];
 [darkView addSubview:reSpring];
+
+//WiFi Button
 UIView *wifi = [[UIView alloc]initWithFrame:CGRectMake(0,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4)];
 [self addSubview:wifi];
-UIImageView *wifiImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"wifi.png"]];
+UIImageView *wifiImage = [[UIImageView alloc] initWithImage:[UIImage imageWithContentsOfFile:wifiImagePath]];
 wifiImage.frame = CGRectMake(6,-10,80,80);
 [wifi addSubview:wifiImage];
 UITapGestureRecognizer *wifiGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(wifi)]autorelease];
 [wifiGesture setNumberOfTouchesRequired:1];
 [wifi addGestureRecognizer:wifiGesture];
+
+//Bluetooh button
 UIView *bluetooth = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - [UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4)];
 [self addSubview:bluetooth];
 UITapGestureRecognizer *bluetoothGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(bluetooth)]autorelease];
 [wifiGesture setNumberOfTouchesRequired:1];
 [bluetooth addGestureRecognizer:bluetoothGesture];
-UIImageView *bluetoothImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"bluetooth.png"]];
+UIImageView *bluetoothImage = [[UIImageView alloc] initWithImage:[UIImage imageWithContentsOfFile:bluetoothImagePath]];
 bluetoothImage.frame = CGRectMake(10,0,60,60);
 [bluetooth addSubview:bluetoothImage];
+
+//Airplane button
 UIView *airplane = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 2,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4)];
 [self addSubview:airplane];
 UITapGestureRecognizer *airplaneGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(airplaneToggle)]autorelease];
 [airplaneGesture setNumberOfTouchesRequired:1];
 [airplane addGestureRecognizer:airplaneGesture];
-UIImageView *airplaneImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"airplane.png"]];
+UIImageView *airplaneImage = [[UIImageView alloc] initWithImage:[UIImage imageWithContentsOfFile:airplaneImagePath];
 airplaneImage.frame = CGRectMake(7,0,60,60);
 [airplane addSubview:airplaneImage];
+
+//Cellular data button
 UIView *data = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width - [UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4,[UIScreen mainScreen].bounds.size.width / 4)];
 UITapGestureRecognizer *dataGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(mobileData)]autorelease];
 [dataGesture setNumberOfTouchesRequired:1];
 [data addGestureRecognizer:dataGesture];
-UIImageView *dataImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"data.png"]];
+UIImageView *dataImage = [[UIImageView alloc] initWithImage:[UIImage imageWithContentsOfFile:dataImagePath]];
 dataImage.frame = CGRectMake(0,-8,80,80);
 [data addSubview:dataImage];
 [self addSubview:data];
+
+//Settings button 
 UIView *settings = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 2,[UIScreen mainScreen].bounds.size.height - 260,[UIScreen mainScreen].bounds.size.width / 2,[UIScreen mainScreen].bounds.size.width / 2)];
 UITapGestureRecognizer *settingsGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(settings)]autorelease];
 [settingsGesture setNumberOfTouchesRequired:1];
 [settings addGestureRecognizer:settingsGesture];
-UIImageView *settingsImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"settings.png"]];
+UIImageView *settingsImage = [[UIImageView alloc] initWithImage:[UIImage imageWithContentsOfFile:settingsImagePath]];
 settingsImage.frame = CGRectMake(15,10,140,140);
 [settings addSubview:settingsImage];
 [self addSubview:settings];
+
+//battery button
 UIView *battery = [[UIView alloc]initWithFrame:CGRectMake(0,[UIScreen mainScreen].bounds.size.height - 260,[UIScreen mainScreen].bounds.size.width / 2,[UIScreen mainScreen].bounds.size.width / 2)];
 UITapGestureRecognizer *batteryGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(lowPowerMode)]autorelease];
 [batteryGesture setNumberOfTouchesRequired:1];
 [battery addGestureRecognizer:batteryGesture];
-UIImageView *batteryImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"battery.png"]];
+UIImageView *batteryImage = [[UIImageView alloc] initWithImage:[UIImage imageWithContentsOfFile:batteryImagePath]];
 batteryImage.frame = CGRectMake(20,50,120,60);
 [battery addSubview:batteryImage];
 [self addSubview:battery];
+
+
 // Brightness slider
 slider = [[UISlider alloc] initWithFrame:CGRectMake(10,[UIScreen mainScreen].bounds.size.height / 2.3,[UIScreen mainScreen].bounds.size.width - 20,35)];
 [slider addTarget:self action:@selector(brightness) forControlEvents:UIControlEventValueChanged];
@@ -137,15 +125,19 @@ brightness.textColor = [UIColor whiteColor];
 brightness.textAlignment = NSTextAlignmentCenter;
 [brightness setFont:[UIFont systemFontOfSize:25]];
 [self addSubview:brightness];
+
+
 // Separators
 UIView *sep1 = [[UIView alloc]initWithFrame:CGRectMake(0,[UIScreen mainScreen].bounds.size.height - 100,[UIScreen mainScreen].bounds.size.width,3)];
 [sep1 setBackgroundColor: [UIColor whiteColor]];
 [sep1 setAlpha:0.5];
 [self addSubview:sep1];
+
 UIView *sep2 = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 2 - 1.5,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.height / 3.3 - 100,3,[UIScreen mainScreen].bounds.size.height / 3.3)];
 [sep2 setBackgroundColor: [UIColor whiteColor]];
 [sep2 setAlpha:0.5];
 [self addSubview:sep2];
+
 UIView *sep3 = [[UIView alloc]initWithFrame:CGRectMake(0,[UIScreen mainScreen].bounds.size.height / 1.9 - 6,[UIScreen mainScreen].bounds.size.width,3)];
 [sep3 setBackgroundColor: [UIColor whiteColor]];
 [sep3 setAlpha:0.5];
@@ -156,6 +148,7 @@ UIView *sep3 = [[UIView alloc]initWithFrame:CGRectMake(0,[UIScreen mainScreen].b
 [data setAlpha:revealPercentage];
 [battery setAlpha:revealPercentage];
 [settings setAlpha:revealPercentage]; */
+	
 if (revealPercentage < 0.3) {
   for (UIView *subview in self.subviews) {
     subview.alpha = 0;
@@ -163,6 +156,7 @@ if (revealPercentage < 0.3) {
   }
 }
 }
+
 %new
 - (void)brightness {
   [[objc_getClass("SBBrightnessController") sharedBrightnessController] setBrightnessLevel:slider.value];
@@ -176,29 +170,40 @@ if (revealPercentage < 0.3) {
 [[objc_getClass("FBSystemService") sharedInstance] shutdownAndReboot:1];
 }
 %new
--(void)reSpring {
-pid_t pid;
-int status;
-const char *argv[] = {"killall", "SpringBoard", NULL};
-posix_spawn(&pid, "/usr/bin/killall", NULL, NULL, (char* const*)argv, NULL);
-waitpid(pid, &status, WEXITED);
+	
+
+-(void)respring {	
+	 [[objc_getClass("FBSystemService") sharedInstance] exitAndRelaunch:YES];	
 }
+
+
 %new
 - (void)wifi {
-pid_t pid;
-int status;
-const char *argv[] = {"uiopen", "prefs:root=WIFI", NULL};
-posix_spawn(&pid, "/usr/bin/uiopen", NULL, NULL, (char* const*)argv, NULL);
-waitpid(pid, &status, WEXITED);
+		// Fix for iOS 8 - iOS 10 for URL schemes :P
+	if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"prefs:root=WIFI"]]) {
+		[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"prefs:root=WIFI"]];
+			} 	
+			
+			else {
+			 [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"App-Prefs:root=WIFI"]];
+			
+		}	
 }
+
+
 %new
 - (void)bluetooth {
-pid_t pid;
-int status;
-const char *argv[] = {"uiopen", "prefs:root=Bluetooth", NULL};
-posix_spawn(&pid, "/usr/bin/uiopen", NULL, NULL, (char* const*)argv, NULL);
-waitpid(pid, &status, WEXITED);
+	// Fix for iOS 8 - iOS 10 for URL schemes :P
+	if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"prefs:root=Bluetooth"]]) {
+		[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"prefs:root=Bluetooth"]];
+			} 	
+			
+			else {
+				[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"App-Prefs:root=Bluetooth"]];
+			
+		 }	
 }
+
 %new
 - (void)airplaneToggle {
   if([[%c(SBTelephonyManager) sharedTelephonyManager] isInAirplaneMode]) {
@@ -221,21 +226,31 @@ waitpid(pid, &status, WEXITED);
 }
 %new
 - (void)mobileData {
-  pid_t pid;
-  int status;
-  const char *argv[] = {"uiopen", "App-prefs:root=MOBILE_DATA_SETTINGS_ID", NULL};
-  posix_spawn(&pid, "/usr/bin/uiopen", NULL, NULL, (char* const*)argv, NULL);
-  waitpid(pid, &status, WEXITED);
+	// Fix for iOS 8 - iOS 10 for URL schemes :P
+	if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"prefs:root=MOBILE_DATA_SETTINGS_ID"]]) {
+		[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"prefs:root=MOBILE_DATA_SETTINGS_ID"]];
+			} 	
+			
+			else {
+				[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"App-Prefs:root=MOBILE_DATA_SETTINGS_ID"]];
+			
+			}	
 }
+
 %new
 - (void)settings {
-  pid_t pid;
-  int status;
-  const char *argv[] = {"uiopen", "prefs:root", NULL};
-  posix_spawn(&pid, "/usr/bin/uiopen", NULL, NULL, (char* const*)argv, NULL);
-  waitpid(pid, &status, WEXITED);
+   // Fix for iOS 8 - iOS 10 for URL schemes :P
+	if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"prefs:root"]]) {
+		[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"prefs:root"]];
+			} 	
+			
+			else {
+				[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"App-Prefs:root"]];
+			
+			}	
 }
 %new
+
 - (void)lowPowerMode {
   if ([[objc_getClass("_CDBatterySaver") batterySaver] getPowerMode] == 0) {
     [[%c(_CDBatterySaver) batterySaver] setPowerMode:1 error:nil];
