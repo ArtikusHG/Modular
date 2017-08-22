@@ -1,6 +1,4 @@
-THEOS_DEVICE_IP = 192.168.1.210
-THEOS_DEVICE_PORT = 22
-ARCHS = arm64
+ARCHS = armv7 armv7s arm64
 include ~/theos/makefiles/common.mk
 
 TWEAK_NAME = Modular
