@@ -1,3 +1,4 @@
+#include <spawn.h>
 UIButton *wifi;
 UISlider *brightness;
 UISlider *volume;
