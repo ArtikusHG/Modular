@@ -1,7 +1,9 @@
 #include <spawn.h>
+#define SYSTEM_VERSION_LESS_THAN(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 UIButton *wifi;
 UISlider *brightness;
 UISlider *volume;
+UITapGestureRecognizer *batteryGesture;
 // Needed interfaces
 @interface VolumeControl
 + (id)sharedVolumeControl;
@@ -71,11 +73,10 @@ UITapGestureRecognizer *wifiGesture = [[[UITapGestureRecognizer alloc]initWithTa
 
 // Battery view
 UIView *battery = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 3 + 7.5,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 3 - 40,[UIScreen mainScreen].bounds.size.width / 3 - 15,[UIScreen mainScreen].bounds.size.width / 3 - 15)];
-[battery setBackgroundColor:[UIColor yellowColor]];
 battery.layer.masksToBounds = YES;
 battery.layer.cornerRadius = 5.0;
 // Battery gesture
-UITapGestureRecognizer *batteryGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(lowPowerMode)]autorelease];
+batteryGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(lowPowerMode)]autorelease];
 [batteryGesture setNumberOfTouchesRequired:1];
 [battery addGestureRecognizer:batteryGesture];
 // Battery image
@@ -203,20 +204,27 @@ if (revealPercentage < 0.3) {
   UITapGestureRecognizer *wifiGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(wifi)]autorelease];
   [wifiGesture setNumberOfTouchesRequired:1];
   [wifi addGestureRecognizer:wifiGesture];
-
   // Battery view
   UIView *battery = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 3 + 7.5,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 3 - 40,[UIScreen mainScreen].bounds.size.width / 3 - 15,[UIScreen mainScreen].bounds.size.width / 3 - 15)];
-  [battery setBackgroundColor:[UIColor yellowColor]];
+  // Battery image
+  UIImageView *batteryImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"battery.png"]];
+  batteryImage.frame = battery.bounds;
+  UIImageView *respringImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"respring.png"]];
+  respringImage.frame = battery.bounds;
+  // Battery view
+  if (SYSTEM_VERSION_LESS_THAN(@"9.0")) {
+    [battery setBackgroundColor:[UIColor greenColor]];
+    [battery addSubview:respringImage];
+  } else {
+    [battery setBackgroundColor:[UIColor yellowColor]];
+    [battery addSubview:batteryImage];
+  }
   battery.layer.masksToBounds = YES;
   battery.layer.cornerRadius = 5.0;
   // Battery gesture
   UITapGestureRecognizer *batteryGesture = [[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(lowPowerMode)]autorelease];
   [batteryGesture setNumberOfTouchesRequired:1];
   [battery addGestureRecognizer:batteryGesture];
-  // Battery image
-  UIImageView *batteryImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"battery.png"]];
-  batteryImage.frame = battery.bounds;
-  [battery addSubview:batteryImage];
   [[self view] addSubview:battery];
   // Settings view
   UIView *settings = [[UIView alloc]initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width / 3 + [UIScreen mainScreen].bounds.size.width / 3 + 5,[UIScreen mainScreen].bounds.size.height - [UIScreen mainScreen].bounds.size.width / 3 - 40,[UIScreen mainScreen].bounds.size.width / 3 - 15,[UIScreen mainScreen].bounds.size.width / 3 - 15)];
@@ -272,6 +280,9 @@ if (revealPercentage < 0.3) {
   }
   %new
   - (void)lowPowerMode {
+    if (SYSTEM_VERSION_LESS_THAN(@"9.0")) {
+      system("killall -9 SpringBoard");
+    } else {
     if ([[objc_getClass("_CDBatterySaver") batterySaver] getPowerMode] == 0) {
       [[%c(_CDBatterySaver) batterySaver] setPowerMode:1 error:nil];
       UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Low Power mode enabled"
@@ -288,6 +299,7 @@ if (revealPercentage < 0.3) {
     cancelButtonTitle:@"Ok"
     otherButtonTitles:nil];
     [alert show];
+  }
   }
   }
 %end
