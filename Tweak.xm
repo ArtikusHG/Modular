@@ -1,4 +1,3 @@
-#include <spawn.h>
 #define SYSTEM_VERSION_LESS_THAN(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 UIButton *wifi;
 UISlider *brightness;
@@ -208,11 +207,7 @@ if (revealPercentage < 0.3) {
 }
 %new
 - (void)settings {
-  pid_t pid;
-  int status;
-  const char *argv[] = {"uiopen", "prefs:root", NULL};
-  posix_spawn(&pid, "/usr/bin/uiopen", NULL, NULL, (char* const*)argv, NULL);
-  waitpid(pid, &status, WEXITED);
+  [[SpringBoard sharedApplication] applicationOpenURL:[NSURL URLWithString:@"prefs:root"]];
 }
 %new
 - (void)lowPowerMode {
@@ -421,11 +416,7 @@ if (UIDeviceOrientationIsLandscape([UIDevice currentDevice].orientation)) {
   }
   %new
   - (void)settings {
-    pid_t pid;
-    int status;
-    const char *argv[] = {"uiopen", "prefs:root", NULL};
-    posix_spawn(&pid, "/usr/bin/uiopen", NULL, NULL, (char* const*)argv, NULL);
-    waitpid(pid, &status, WEXITED);
+    [[SpringBoard sharedApplication] applicationOpenURL:[NSURL URLWithString:@"prefs:root"]];
   }
   %new
   - (void)lowPowerMode {
